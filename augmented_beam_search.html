@@ -1,0 +1,476 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <title>Classifier Guided Beam-Search to Reduce Large Language Model's Hallucinative Behavior | Aymen Kallala</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '\\(', right: '\\)', display: false}]});">
+    </script>
+    <style>
+        body {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        #header {
+            background-color: #282b30;
+            color: #ffffff;
+            padding: 20px 0;
+            text-align: center;
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        #subheader {
+            text-align: center;
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        #main {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            color: #333;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 1.75em;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            color: #333;
+            font-size: 1.5em;
+            margin-top: 1.5em;
+        }
+
+        h3 {
+            color: #333;
+            font-size: 1.25em;
+            margin-top: 1em;
+        }
+
+        p, ul {
+            margin: 1em 0;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        a {
+            color: #333;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        blockquote {
+            margin: 20px 0;
+            padding: 10px 20px;
+            background-color: #f0f0f0;
+            border-left: 5px solid #333;
+            font-style: italic;
+            color: #666;
+        }
+
+        #footer {
+            background-color: #f5f5f5;
+            color: #666;
+            text-align: center;
+            padding: 20px 0;
+            margin-top: 40px;
+        }
+
+        .icons a {
+            color: #666;
+            margin: 0 10px;
+        }
+
+        .icons a:hover {
+            color: #333;
+        }
+
+        .toc {
+            background-color: #e0e0e0;
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .toc summary {
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+            margin-top: 10px;
+        }
+
+        .toc li {
+            margin-bottom: 5px;
+        }
+
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: Consolas, "Courier New", monospace;
+        }
+
+        .illustration-placeholder {
+    width: 100%; /* Ensures the container takes up the full width of its parent */
+    max-width: 100%; /* Ensures the container doesn't exceed the parent's width */
+    overflow: hidden; /* Prevents the image from overflowing the container */
+    margin: 20px 0; /* Adds some space around the container */
+    text-align: center; /* Centers the image inside the container */
+}
+    </style>
+</head>
+
+<body>
+
+    <!-- Wrapper -->
+    <div id="wrapper">
+
+        <!-- Header -->
+        <header id="header">
+            Classifier Guided Beam-Search to Reduce Large Language Model's Hallucinative Behavior
+        </header>
+
+        <div id="subheader">
+            Aymen Kallala, Jacklyn Tsai, and Ruize Xu
+        </div>
+
+        <!-- Main -->
+        <div id="main">
+
+            <!-- Table of Contents -->
+            <details class="toc">
+                <summary>Table of Contents</summary>
+                <ul>
+                    <li><a href="#introduction">Introduction</a></li>
+                    <li><a href="#related-work">Related Work</a></li>
+                    <li><a href="#eliciting-hallucination">Eliciting Hallucination via Chain of Thoughts and Step-wise Probing</a></li>
+                    <li><a href="#methodology">Methodology</a></li>
+                    <ul>
+                        <li><a href="#dataset">1. Dataset</a></li>
+                        <li><a href="#probing-llms">2. Probing LLMs</a></li>
+                        <li><a href="#guided-inference">3. Guided Inference</a></li>
+                    </ul>
+                    <li><a href="#results">Results</a></li>
+                    <ul>
+                        <li><a href="#probe-training">1. Probe Training</a></li>
+                        <li><a href="#guided-beam-search">2. Guided Beam-Search Performance</a></li>
+                        <li><a href="#over-confidence">3. Over-Confidence in Hallucination Classification</a></li>
+                    </ul>
+                    <li><a href="#conclusion">Conclusion and Discussion</a></li>
+                </ul>
+            </details>
+
+            <!-- Post -->
+            <section class="post">
+                <h1 id="introduction">Introduction</h1>
+                <p>Large Language Models (LLMs) exhibit a critical tendency to produce hallucinations, resulting in content that is inconsistent with real-world facts or user inputs. This phenomenon poses substantial challenges to their practical deployment and raises concerns over the reliability of LLMs in real-world scenarios, which attracts increasing attention to detect and mitigate these hallucinations. Recent work successfully proved that hallucinations can be detected in the internal states of a large language model, by training a lightweight classifier to that matter. To take this work one step further, we designed a <b>classifier-guided beam search algorithm at a statement level</b> that intends to use their knowledge at inference time to reduce the probability of generating text containing a hallucination. We demonstrate the effectiveness of our approach by comparing <b>LLama2-7B</b> performance with and without it. Classifier-Guided can hold an improvement of around <b>3% on StrategyQA and CommonsenseQA</b> and <b>1% on TruthfulQA</b>.</p>
+
+                <h2 id="related-work">Related Work</h2>
+                <h3 id="open-ended-text-generation">1. Open-ended Text Generation</h3>
+                <p>When given an input sequence of tokens \(x\), language models perform open-ended completion by generating the next tokens that are the <em>most likely</em> to follow \(x\) until reaching the <em>EOS</em> token (End of Sentence). Formally, it involves generating the next \(n\) tokens to obtain the completed sequence \(x, y_1, \ldots, y_n\). This is done in an autoregressive way while assuming that language models compute \(P(y_{1:t}, x)\) using the left-to-right decomposition of next token probability. Based on the chain rule of probability and the Markov assumption, the decoding objective maximized while generating the completion at time step \(T\) becomes:</p>
+                <blockquote>
+                    $$P(y_{1:T}) = \prod_{t=1}^{T}p(y_t \mid y_{1:t-1}, x)$$
+                </blockquote>
+                <p>One of the most commonly used decoding algorithms to generate human-likely text is the beam search algorithm. Instead of employing a greedy approach that simply picks candidates with the highest probability at each step, Beam search proceeds stochastically, selecting from the top-k tokens based on their normalized probabilities. This method efficiently navigates through the search space, allowing for the simultaneous consideration of multiple potential continuations of the input sequence.</p>
+
+                <div class="illustration-placeholder">
+                    <!-- Placeholder for illustration -->
+                    <img src="images/augmented_beam_search/beam-search.svg" alt="Sampling Strategies Illustration" style="max-width: 100%; height: auto; border-radius: 5px;"> 
+                </div>
+                
+
+                <h3 id="constraining-the-objective-function">2. Constraining the Objective Function</h3>
+                <p>Guiding the decoding process to make the model generate specific types of answers can be done simply by adding a numeric constraint to the objective function. For instance, Xie et al. introduced a stepwise self-evaluation mechanism to guide and calibrate the reasoning process of LLMs. They defined a constraint function \(C(s_t, s_{1:t-1}) \in [0, 1]\) within each step, which consisted of a confidence score in the correctness of the reasoning sequence \(s_t\) based on the previous context \(s_{1:t-1}\). The constrained decoding objective function \(E(s_{1:T})\) that combines the language model probability and the correctness confidence score is given by:</p>
+                <blockquote>
+                    $$E(s_{1:T}) = \prod_{t=1}^{T} P_{\lambda}^{LM}(s_t \mid s_{1:t-1}, x)C^{1-\lambda}(s_t)$$
+                </blockquote>
+                <p>Here, \(P_{\lambda}^{LM}\) is the language model's probability distribution. \(\lambda \in [0, 1]\) is a weight hyperparameter to balance the LM score and the confidence score, which makes the log-transformed objective a weighted average of multiplied probabilities and confidence scores.</p>
+
+
+                <h3 id="hidden-layers-probing">3. Hidden Layers Probing</h3>
+                <p>In their work, Chwang et al. demonstrated that it is possible to predict the hallucinative behavior of a language model by probing its internal states with linear classifiers. Assuming that a language model generated the sequence \(y_1, \ldots, y_n\) in response to a context \(x\), probing the first layer would involve extracting the first hidden layer logits \(z_1^1, \ldots, z_n^1\) (all of dimension \(d\)) activated when generating the token \(y_n\). A linear classifier can then be trained to label the truthfulness of the sequence \(y_1, \ldots, y_n\) by taking \(z_1^1, \ldots, z_n^1\) as input and outputting True or False.</p>
+
+                <div class="illustration-placeholder" style="text-align: center;">
+                    <!-- Placeholder for illustration -->
+                    <img src="images/augmented_beam_search/probing_method.png" alt="Sampling Strategies Illustration" style="max-width: 50%; height: auto; border-radius: 5px;"> 
+                </div>
+                
+
+                <h3 id="true-false-statements">4. True/False Statements</h3>
+                <p>Previous work has narrowed the scope of LLM probing to specific tasks, such as abstractive summarization, knowledge-grounded generation, and data-to-text generation. However, the focus on factual statement verification is relatively new. The FEVER dataset is a publicly available resource for fact extraction and verification against textual sources, consisting of 185,445 claims manually verified against Wikipedia pages.</p>
+
+                <h2 id="eliciting-hallucination">Eliciting Hallucination via Chain of Thoughts and Step-wise Probing</h2>
+                <p>Assuming access to a white-box language model \(LM\) and a probe classifier \(C\) capable of giving reliable predictions on the truthfulness of a sequence of activation logits, we propose a method to reduce hallucinative generation by guiding the decoding process. Given the strong results showcased by chain of thought reasoning, we hypothesize that the truthfulness of answers generated by the model can be improved by forcing the generation of intermediarily true statements before the final answer.</p>
+
+                <p>In a QA format, our generation method involves forcing the model to generate \(T\) statements before giving a final answer. At each timestep, \(K\) candidate statements are generated following standard methods, and the model's internal activations are retained. The truthfulness of each candidate statement is then assessed by the probe \(C\). To construct the final answer, we apply a classifier-guided beam-search on a statement level. The objective function that is maximized makes parallel use of both the generation probability computed by the language model and the probe prediction to guide the generation process toward a truthful answer.</p>
+
+                <blockquote>
+                    $$S(s^t_k, x) = P_{LM}^{\lambda}(s^t_k, x) \cdot C^{1-\lambda}(s^t_k)$$
+                </blockquote>
+
+                <div class="illustration-placeholder">
+                    <!-- Placeholder for illustration -->
+                    <img src="images/augmented_beam_search/our_method.png" alt="Sampling Strategies Illustration" style="max-width: 100%; height: auto; border-radius: 5px;"> 
+
+                </div>
+
+                <h2 id="methodology">Methodology</h2>
+                <h3 id="dataset">1. Dataset</h3>
+                <p>To achieve our goals, the first step was to gather a sufficiently large and robust dataset comprising both factual and hallucinative statements. In line with previous work, we extended the True-False dataset with the FEVER dataset to ensure a more comprehensive data coverage. Additionally, we extracted approximately 6,000 verified facts from the StrategyQA corpus and prompted GPT-3.5 to generate false statements from each fact. To facilitate a more nuanced analysis of our find- ings, we categorized our dataset and evaluation datasets into five distinct application subcategories: Health and Medicine (1961 datapoints), Humani- ties (4932 datapoints), Natural Sciences (4258 dat- apoints), Social Sciences (4957 datapoints), and Technology and Engineering (4300 datapoints). The assignment of each utterance to its respective category was achieved through zero-shot classifica- tion facilitated by GPT-3.5 (Appendix A.1).
+                    A representative excerpt from our dataset is pre- sented in Tables 1 and 2, illustrating examples of True and False Statements.</p>
+
+                <div style="display: flex; justify-content: space-between;">
+
+                    <!-- True Statements Table -->
+                    <div style="flex: 1; margin-right: 10px;">
+                        <h3>Examples of True Statements</h3>
+                        <table border="1" cellpadding="10" cellspacing="0" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Example of True Statement</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Health and Medicine</td>
+                                    <td>Lyme disease infects those affected by it.</td>
+                                </tr>
+                                <tr>
+                                    <td>Humanities</td>
+                                    <td>Specific art forms were banned in Nazi Germany.</td>
+                                </tr>
+                                <tr>
+                                    <td>Natural Sciences</td>
+                                    <td>The Greenland shark is also known as the grey shark.</td>
+                                </tr>
+                                <tr>
+                                    <td>Social Sciences</td>
+                                    <td>Quentin Tarantino works in the movie industry.</td>
+                                </tr>
+                                <tr>
+                                    <td>Technology and Engineering</td>
+                                    <td>Monkeys can be trained to push buttons.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                
+                    <!-- False Statements Table -->
+                    <div style="flex: 1; margin-left: 10px;">
+                        <h3>Examples of False Statements</h3>
+                        <table border="1" cellpadding="10" cellspacing="0" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Example of False Statement</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Health and Medicine</td>
+                                    <td>A doctorate takes an average of 3.5 years.</td>
+                                </tr>
+                                <tr>
+                                    <td>Humanities</td>
+                                    <td>Everton F.C. is not a football club.</td>
+                                </tr>
+                                <tr>
+                                    <td>Natural Sciences</td>
+                                    <td>Iceland is not volcanically active.</td>
+                                </tr>
+                                <tr>
+                                    <td>Social Sciences</td>
+                                    <td>Seppuku is a Korean ritual.</td>
+                                </tr>
+                                <tr>
+                                    <td>Technology and Engineering</td>
+                                    <td>Apple was founded in 1979.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                
+                </div>
+                
+
+                <h3 id="probing-llms">2. Probing LLMs</h3>
+                <p>Following dataset mapping, we conducted a series of experiments involving the GPT-2, Zephyr1.6B, Llama2-7B, and Llama2-13B models. Probes were trained on all layers for each model, and the results were meticulously compared to select the best one for our experiments. Our attention ultimately gravitated toward the Llama2-7B model due to its provision of the most accurate and generalizable results across our validation dataset and for computational resource saving.</p>
+
+                <div class="illustration-placeholder">
+                    <!-- Placeholder for illustration -->
+                    <img src="images/augmented_beam_search/llm_probing_per_size.png" alt="Sampling Strategies Illustration" style="max-width: 100%; height: auto; border-radius: 5px;"> 
+                </div>
+                <p>Our attention ultimately gravitated towards the LLama2-7B model due to its provision of the most accurate and generalizable results across our validation dataset and also for the sake of computational resources saving. Unsurprisely, bigger models tend to be easier to probe. A fact that can be explained by the bigger dimensions in their internal states, providing the probes with more information encoded in the embeddings.</p>
+                <p>Our probe network is a Multilayer Perceptrons (MLPs) classifier comprising three hidden fully connected layers with dimensions 256, 128, and 64. Between each layer a dropout rate = 0.2 is applied to avoid overfitting. Training is conducted with a learning rate of 0.01, batch size of 512, and a total of 20 epochs. Evaluation is performed using Cross-Entropy Loss, with parameters updated using the AdamW optimizer.</p>
+                    
+                <p>With probing, we aim to address the question: "Which layer's internal states contains the best information to detect hallucinations?". Quite similar to \citep{azaria2023internal} findings, in our experiments, we noticed that the deeper layers of Llama2 yielded better results on our custom dataset. In consideration of computational constraints, our final probe evaluation prioritized assessing layers within the latter portion of the LLama2 model. The 3 layers with the best overall accuracies were selected for the following inference process.</p>
+                
+                <div class="illustration-placeholder">
+                    <!-- Placeholder for illustration -->
+                    <img src="images/augmented_beam_search/llama-layers-probing-results.png" alt="Sampling Strategies Illustration" style="max-width: 100%; height: auto; border-radius: 5px;"> 
+                </div>
+
+                <h3 id="guided-inference">3. Guided Inference</h3>
+                <p>To verify the effectiveness of the probes' guidance, we evaluate our method on three benchmarks: TruthfulQA, StrategyQA, and CommonSenseQA. During inference, we follow a benchmark-specific few-shot Chain-of-Thought prompt to make the model generate reasoning steps before final answers, where an expected step is a factual statement. At each timestamp, we perform real-time hallucination detection on the candidates with our pre-trained classifier, and the confidence score is adopted to guide the candidate selection.</p>
+
+                <h2 id="results">Results</h2>
+                <h3 id="guided-beam-search">1. Guided Beam-Search Performance</h3>
+                <p>As shown in the next Table, we get consistent improvement on all the benchmarks, and our method yields most significant enhancement on StrategyQA. It is reasonable considering the reasoning paths of StrategyQA consist more statements than others. The consistent improvement also indicates the transferability of the pretrained classifier trained with limited data, given the benchmarks are more sophisticated.
+                    Compared with single layer probes, the ensemble probes do not show obvious enhancement while they can alleviate the over-confidence discussed in the next section. Assuming a high quality classifier, guiding the generation with higher confidence should guide the search to more truthful candidates, and should not worsen the performance. This is corresponding to our observation.
+                    It is surprising that larger and more complex training data brings reduction to the generation performance. An explanation is the capacity of MLP as probes. The larger training data introduces more noise and induces the model to be over-fitting. Future work may explore larger models as more generalizable probes.</p>
+
+                <div style="display: flex; justify-content: center;">
+    
+                    <table border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; margin-right: 10px;">
+                        <caption><strong>Results (accuracy).</strong></caption>
+                        <thead>
+                            <tr>
+                                <th>Model & Benchmark</th>
+                                <th>TruthfulQA</th>
+                                <th>StrategyQA</th>
+                                <th>CommonSenseQA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Baseline</td>
+                                <td>33.58%</td>
+                                <td>65.13%</td>
+                                <td>19.40%</td>
+                            </tr>
+                            <tr>
+                                <td>Guided-single-S</td>
+                                <td>34.06%</td>
+                                <td><strong>68.94%</strong></td>
+                                <td>20.11%</td>
+                            </tr>
+                            <tr>
+                                <td>Guided-ensemble-S</td>
+                                <td><strong>34.48%</strong></td>
+                                <td>68.43%</td>
+                                <td><strong>22.85%</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Guided-single-L</td>
+                                <td>30.79%</td>
+                                <td>64.27%</td>
+                                <td>21.04%</td>
+                            </tr>
+                            <tr>
+                                <td>Guided-ensemble-L</td>
+                                <td>31.66%</td>
+                                <td>65.75%</td>
+                                <td>19.51%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                
+                </div>
+                
+
+                <h3 id="over-confidence">2. Over-Confidence in Hallucination Classification</h3>
+                <p>We have ve observed a tendency towards over- confidence in the implementation of hallucination classifiers, where the probability distribution of classifiers tends to resemble a binomial distribution. To address this, we suggest two straightforward so- lutions to provide softer guidance.
+                    Our first approach involves ensembling the out- puts of multiple probes to mitigate over-confidence. Below, you’ll find the probability distributions of the outputs based on 500 samples: By ensembling multiple probes, the over-confidence is mitigated while maintaining the discriminality ability.
+                    Another approach is introducing a temperature parameter T in the softmax layer to adjust the cen- trality of the output distribution. Larger temper- ature lower the gap of binary probabilities. We conducted an ablation study of the impact of this temperature parameter and showcased the results on StrategyQA, the results are shown in Table 5, where T = 2 yields best result.</p>
+
+                    <div style="display: flex; justify-content: center;">
+                        <table border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; margin-top: 20px;">
+                            <thead>
+                                <tr>
+                                    <th>Temperature</th>
+                                    <th>Accuracy</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>T=1</td>
+                                    <td>68.13%</td>
+                                </tr>
+                                <tr>
+                                    <td>T=2</td>
+                                    <td><strong>68.94%</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>T=5</td>
+                                    <td>67.39%</td>
+                                </tr>
+                                <tr>
+                                    <td>T=10</td>
+                                    <td>68.46%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+
+                <h2 id="conclusion">Conclusion and Discussion</h2>
+                <p>In this work, we explored the feasibility of reducing hallucinative statement generation by probing the hidden states of a model. We found that bigger models tend to be easier to probe, and middle layers of Llama2 are more suitable for detecting hallucinations on various topics. We used the trained classifier to guide the generation of new text by tweaking the decoding objective function in the beam search. We tested our method on three benchmarks and achieved consistent improvement.</p>
+
+                <p>However, several critical questions remain for future exploration:</p>
+                <ul>
+                    <li>The detection of hallucinations using hidden states is limited by the dataset used to train and validate our classifier. It's unclear which types of hallucinations cannot be detected across various models and why.</li>
+                    <li>The generalizability of classifiers is a significant challenge. Our classifiers exhibit unstable performance when trained with different data corpora. It's unclear whether increasing the model size of the classifier or modifying the training data could lead to more robust classifiers.</li>
+                    <li>There may be superior methods for integrating classifiers in generation or other applications that offer enhanced performance and robustness while imposing minimal computational overhead.</li>
+                </ul>
+            </section>
+        </div>
+
+        <!-- Back Button -->
+        <div class="back-button">
+            <a href="index.html">Return to Main Page</a>
+        </div>
+
+        <!-- Footer -->
+        <footer id="footer">
+            <section>
+                <h2>Contact Me</h2>
+                <dl class="alt">
+                    <dt>Email:</dt>
+                    <dd><a href="mailto:aymen.kallala@gmail.com">aymen.kallala@gmail.com</a><br><a href="mailto:aymen.kallala@columbia.edu">aymen.kallala@columbia.edu</a></dd>
+                </dl>
+                <ul class="icons">
+                    <li><a href="https://www.linkedin.com/in/aymenkallala/" class="icon brands fa-linkedin"><span class="label">LinkedIn</span></a></li>
+                    <li><a href="https://github.com/AymenKallala" class="icon brands fa-github"><span class="label">GitHub</span></a></li>
+                </ul>
+            </section>
+        </footer>
+
+    </div>
+
+</body>
+
+</html>

@@ -1,0 +1,413 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <title>Sampling Strategies for Large Language Models | Aymen Kallala</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '\\(', right: '\\)', display: false}]});">
+    </script>
+    <style>
+        body {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        #header {
+            background-color: #282b30;
+            color: #ffffff;
+            padding: 20px 0;
+            text-align: center;
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        #subheader {
+            text-align: center;
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        #main {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            color: #333;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 1.75em;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            color: #333;
+            font-size: 1.5em;
+            margin-top: 1.5em;
+        }
+
+        h3 {
+            color: #333;
+            font-size: 1.25em;
+            margin-top: 1em;
+        }
+
+        p, ul {
+            margin: 1em 0;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        a {
+            color: #333;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        blockquote {
+            margin: 20px 0;
+            padding: 10px 20px;
+            background-color: #f0f0f0;
+            border-left: 5px solid #333;
+            font-style: italic;
+            color: #666;
+        }
+
+        #footer {
+            background-color: #f5f5f5;
+            color: #666;
+            text-align: center;
+            padding: 20px 0;
+            margin-top: 40px;
+        }
+
+        .icons a {
+            color: #666;
+            margin: 0 10px;
+        }
+
+        .icons a:hover {
+            color: #333;
+        }
+
+        .toc {
+            background-color: #e0e0e0;
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .toc summary {
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+            margin-top: 10px;
+        }
+
+        .toc li {
+            margin-bottom: 5px;
+        }
+
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: Consolas, "Courier New", monospace;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Wrapper -->
+    <div id="wrapper">
+
+        <!-- Header -->
+        <header id="header">
+            Sampling Strategies for Large Language Models
+        </header>
+
+        <div id="subheader">
+            Aymen Kallala
+        </div>
+
+         <!-- Illustration -->
+         <div style="text-align: center; margin-bottom: 20px;">
+            <img src="images/decoding_methods.png" alt="Sampling Strategies Illustration" style="max-width: 100%; height: auto; border-radius: 5px;">
+        </div>
+
+        <!-- Main -->
+        <div id="main">
+
+            <!-- Table of Contents -->
+            <details class="toc">
+                <summary>Table of Contents</summary>
+                <ul>
+                    <li><a href="#introduction">Introduction</a></li>
+                    <li><a href="#overview">Overview</a></li>
+                    <li><a href="#experimental-setting">Experimental Setting</a></li>
+                    <ul>
+                        <li><a href="#model-used">1. Model Used</a></li>
+                        <li><a href="#prompt-and-task">2. Prompt and Task</a></li>
+                    </ul>
+                    <li><a href="#decoding-methods">Decoding Methods</a></li>
+                    <ul>
+                        <li><a href="#greedy-decoding">1. Greedy Decoding</a></li>
+                        <li><a href="#temperature-sampling">2. Temperature Sampling</a></li>
+                        <li><a href="#top-k-sampling">3. Top-K Sampling</a></li>
+                        <li><a href="#nucleus-sampling">4. Nucleus Sampling</a></li>
+                    </ul>
+                    <li><a href="#conclusion">Conclusion</a></li>
+                </ul>
+            </details>
+
+            <!-- Post -->
+            <section class="post">
+                <h1 id="introduction">Introduction</h1>
+                <p>Large Language Models (LLMs) are capable of generating impressively human-like text that can be used in various applications, from chatbots to content creation or e-mail generation. However, the quality of the generated text largely depends on the sampling strategy employed during thegeneration process that lies underneath our favorite AI Assistants (ChatGPT, Gemini, Claude etc...). This blog post explores different decoding strategies, with a focus on their practical implementation and impact on the generated output.</p>
+                <h2 id="overview">Overview</h2>
+                <p>This blogpost is based on the methods discussed in the paper "<a href="https://arxiv.org/abs/1904.09751" target="_blank">The Curious Case of Neural Text Degeneration</a>." The primary contribution of this paper is Nucleus Sampling, a method designed to improve the quality and human-likeness of generated text. In this post, we’ll examine several decoding strategies, including Greedy Decoding, Temperature Sampling, Top-K Sampling, and Nucleus Sampling, and compare their effectiveness. You can also explore the full implementation of these methods in my GitHub repository <a href="https://github.com/AymenKallala/Human-like-language-generation" target="_blank">here</a>.</p>
+
+                <h2 id="experimental-setting">Experimental Setting</h2>
+                <h3 id="model-used">1. Model Used</h3>
+                <p>For the experiments, I used the GPT-2 large model, which has approximately 774 million parameters. This model was pre-trained on a vast corpus of English text in a self-supervised manner. The choice of a <i>hobbled</i> GPT-2 that was not further instructed through <i>SFT</i> or <i>RLHF</i>, rather than more advanced models, allows me to focus on the impact of the different sampling strategies without the interference of pre-existing biases towards "human-like" language generation.</p>
+
+                <h3 id="prompt-and-task">2. Prompt and Task</h3>
+                <p>We provided the model with extensive context to better distinguish meaningful generations from senseless ones. Since GPT-2 was trained on Wikipedia, it has the necessary knowledge to generate informative content. The key aspect of our experiments is to evaluate how different decoding methods influence the coherence and relevance of the generated text. The generation process was constrained by the `max_new_token` hyperparameter set to 100, ensuring that the output stops either when this limit is reached or when the model generates an End of Sentence token.</p>
+
+                <h2 id="decoding-methods">Decoding Methods</h2>
+                <p>In this part I will discuss several sampling strategies and their practical implementation.</p>
+                <details>
+                    <summary> <b>Click to see the main function used to generate some text given a particular prompt, a model, its tokenizer and a sampling strategy.</b></summary>
+                    <pre><code>
+def generate(model, input, tokenizer, sampler, max_new_tokens, context_length=None):
+    """
+    Generates text using a specified sampling strategy.
+
+    Parameters:
+    - model: The pre-trained language model used for generating text.
+    - input: The initial input text for the model to start generating from.
+    - tokenizer: The tokenizer associated with the model, used to encode and decode text.
+    - sampler: The sampling method used to select the next token during generation (e.g., Greedy, Top-K, Nucleus).
+    - max_new_tokens: The maximum number of new tokens to generate.
+    - context_length: The maximum length of the context that the model should consider. If None, it defaults to the tokenizer's model max length.
+
+    Returns:
+    - Generated text decoded from the token indices.
+    """
+
+    # Set context length to the tokenizer's max length if not provided
+    if context_length is None:
+        context_length = tokenizer.model_max_length
+
+    # Set the model to evaluation mode
+    model.eval()
+
+    # Tokenize the input text
+    encoded = tokenizer(input, return_tensors="pt").to(device)
+    EOS = tokenizer.eos_token_id  # End of sequence token ID
+
+    # Initialize the input token indices and an empty tensor for the generated output
+    idx = encoded['input_ids']
+    generated = torch.tensor([], dtype=torch.int32, device=device)
+    last_token = None
+    step = 0
+
+    while last_token != EOS and step < max_new_tokens:
+        # Crop the input to the last `context_length` tokens
+        # The model only considers a context of maximum size `context_length`
+        B, T = idx.shape
+        idx_cond = idx[:, -max(T, context_length):]
+
+        # Get the model's predictions (logits) for the next token
+        logits = model(idx_cond).logits
+
+        # Focus only on the last time step's logits
+        logits = logits[:, -1, :]
+
+        # Sample the next token using the provided sampler
+        idx_next = sampler(logits).to(device)
+        last_token = idx_next.view(-1, 1)
+
+        # Append the sampled token to the generated sequence
+        generated = torch.cat([generated, last_token], dim=-1)
+
+        # Update the input sequence by adding the new token
+        idx = torch.cat([idx[:, 1:], last_token], dim=-1)
+        step += 1
+
+    # Decode the generated token indices into text
+    return tokenizer.decode(generated.squeeze())
+                    </code></pre>
+                </details>
+                
+
+                <h3 id="greedy-decoding">1. Greedy Decoding</h3>
+                <p>Greedy Decoding is the simplest and least efficient decoding strategy. At each step of the generation process, the model selects the token with the highest probability given the context of the previously generated tokens.</p>
+                <blockquote>The probability of generating the next token \( y_t \) given the context of the previously generated tokens \( y_1, y_2, \ldots, y_{t-1} \) is given by:</blockquote>
+                <blockquote>$$
+                    P(y_t \mid y_1, y_2, \ldots, y_{t-1}) = \arg\max_{y_t} P(y_t \mid y_1, y_2, \ldots, y_{t-1})
+                $$</blockquote>
+                <p>This process is repeated iteratively until the model generates an end-of-sequence token or reaches a predefined maximum sequence length. While simple, Greedy Decoding often leads to repetitive and uncreative outputs due to its focus on selecting only the most likely token at each step.</p>
+                <pre><code> 
+    class GreedySampler(Sampler):
+        def __init__(self):
+            self.softmax = nn.Softmax(dim = -1)
+        def __call__(self, logits: torch.Tensor):
+            probs = self.softmax(logits)
+            dist = Categorical(probs)
+    
+            return dist.sample()
+                    </code></pre>
+                <p>Example of greedy decoding generation:</p>
+                <blockquote>
+                    <strong>Prompt:</strong> "The capital of France, Paris, is a beautiful city where people are gorgeous and elegant. You get to drink coffee outside..."<br>
+                    <strong>Output:</strong> "Everyone talks about the food courses. If you think around the block you may find things interesting. I love to try new things. 'Price: Approx $3-4, $15 gratuity. Wednesday of the 12th Sunday: Some dinner and drinks dancing, feel free to come.' 31. DATE: February 17th 1993, VENUE: Basketballrama GAMES: Wins over Memphis, Dallas, Dallas RESULT"
+                </blockquote>
+
+
+                <h3 id="temperature-sampling">2. Temperature Sampling</h3>
+                <p>Temperature Sampling involves adjusting the softmax function to control the level of randomness in the generated sequences. The softmax function, which converts logits (unscaled log probabilities) into a probability distribution, is modified by a temperature parameter \( T \).</p>
+                <blockquote>The probability of selecting a token \( y_i \) during Temperature Sampling is given by:</blockquote>
+                <blockquote>$$
+                    P(y_i) = \frac{e^{\frac{\text{logit}(y_i)}{T}}}{\sum_{j}e^{\frac{\text{logit}(y_j)}{T}}}
+                $$</blockquote>
+                <p>In this equation, \( \text{logit}(y_i) \) is the logit value associated with token \( y_i \), and \( T \) is the temperature parameter. A higher temperature increases diversity by making the probability distribution flatter, allowing for more exploration. Conversely, a lower temperature sharpens the distribution, focusing the generation on more probable tokens.</p>
+                <p>Example using Temperature Sampling:</p>
+                <blockquote>
+                    <strong>Prompt:</strong> "The capital of France, Paris, is a beautiful city where people are gorgeous and elegant. You get to drink coffee outside..."<br>
+                    <strong>Output:</strong> "Several cafes have a chance to visit the house of the deceased. Only one word can describe the house of the deceased. The people that passed away fell in love and lived in this house. Demons were living in the house and were possessed by a spirit. There are haunted houses, ghost stories, and even the myth of the witch who haunted the bodies of three men who went into a house and when they came out, one of them was dead."
+                </blockquote>
+
+                <pre><code>class TemperatureSampler(Sampler):
+    def __init__(self, temperature: float = 1.0):
+        self.temperature = temperature
+        self.softmax = nn.Softmax(dim=-1)
+
+    def __call__(self, logits: torch.Tensor):
+        logits=logits / self.temperature
+        probs = self.softmax(logits)
+        dist = Categorical(probs)
+        return dist.sample()
+</code></pre>
+
+                <h3 id="top-k-sampling">3. Top-K Sampling</h3>
+                <p>Top-K Sampling restricts the model’s choice of tokens to the top \( K \) most probable tokens at each step. This method limits the model’s exploration to a fixed number of high-probability candidates, which can reduce the likelihood of generating nonsensical text but may also lead to repetitive outputs.</p>
+                <blockquote>The steps involved in Top-K Sampling are:</blockquote>
+                <ul>
+                    <li><strong>Compute Probabilities:</strong> The model computes probabilities for each word in the vocabulary based on the context.</li>
+                    <li><strong>Sort Probabilities:</strong> The probabilities are sorted in descending order.</li>
+                    <li><strong>Select Top-K Words:</strong> The top-K words with the highest probabilities are selected.</li>
+                    <li><strong>Normalize Probabilities:</strong> The selected probabilities are normalized to create a distribution over the top-K words.</li>
+                    <li><strong>Sample from Distribution:</strong> A word is sampled from this distribution to obtain the next predicted word.</li>
+                </ul>
+                <p>Example using Top-K Sampling:</p>
+                <blockquote>
+                    <strong>Prompt:</strong> "The capital of France, Paris, is a beautiful city where people are gorgeous and elegant. You get to drink coffee outside..."<br>
+                    <strong>Output:</strong> "The place has a huge number of restaurants, and a lot of different places to get your food from and to get your drink. You could have a beer, and the waiter will bring it to your table and serve you something else. There is no reason why this should not be possible. I am happy to say we have been successful in getting the idea for this idea into the open source community, but as you will see in the following video, it isn't a simple..."
+                </blockquote>
+
+                <pre><code>class TopKSampler(Sampler):
+    def __init__(self, k: int, sampler: Sampler):
+        self.k = k
+        self.sampler = sampler
+
+    def __call__(self, logits: torch.Tensor):
+        zeros = logits.new_ones(logits.shape) * float('-inf')
+        values, indices = torch.topk(logits, self.k, dim=-1)
+        zeros.scatter_(-1, indices, values)
+        return self.sampler(zeros)
+</code></pre>
+
+                <h3 id="nucleus-sampling">4. Nucleus Sampling</h3>
+                <p>Nucleus Sampling, also known as Top-P Sampling, addresses the limitations of Top-K Sampling by dynamically adjusting the number of candidate tokens based on their cumulative probability. Instead of fixing the number of candidates, Nucleus Sampling includes all tokens whose cumulative probability mass exceeds a threshold \( P \).</p>
+                <blockquote>The key intuition behind Nucleus Sampling is to adapt to the changing probabilities of words, allowing for a dynamic vocabulary size. This flexibility enables the generation of more diverse and contextually relevant outputs.</blockquote>
+                <blockquote>$$
+                    P_{\text{nucleus}}(w_t \mid \text{context}) = \frac{\text{nucleus-words}}{\sum_{i=1}^{P} \text{nucleus-words}_i}
+                $$</blockquote>
+                <p>Nucleus Sampling is particularly effective in scenarios where creativity and coherence need to be balanced. It can dynamically expand or contract the candidate pool to include both high-probability and lower-probability tokens, providing a more nuanced and human-like generation process.</p>
+                <p>Example using Nucleus Sampling:</p>
+                <blockquote>
+                    <strong>Prompt:</strong> "The capital of France, Paris, is a beautiful city where people are gorgeous and elegant. You get to drink coffee outside..."<br>
+                    <strong>Output:</strong> "If you are going to do this you should have the same clothes and shoes as the person you are meeting. You should also bring the same tools you will be using. I have used this for years and it works great. Here are some other tools I use. I use a basic blender and a food processor. I also use a cheese grater and a cheese cloth. I have been using a food processor for a few years."
+                </blockquote>
+
+                <pre><code>class NucleusSampler(Sampler):
+    def __init__(self, p: float, sampler: Sampler):
+        self.p = p
+        self.sampler = sampler
+        self.softmax = nn.Softmax(dim=-1)
+
+    def __call__(self, logits: torch.Tensor):
+        probs = self.softmax(logits)
+        sorted_probs, indices = torch.sort(probs, dim=-1, descending=True)
+        cum_sum_probs = torch.cumsum(sorted_probs, dim=-1)
+        nucleus = cum_sum_probs < self.p
+        nucleus = torch.cat([nucleus.new_ones(nucleus.shape[:-1] + (1,)), nucleus[..., :-1]], dim=-1)
+        sorted_log_probs = torch.log(sorted_probs)
+        sorted_log_probs[~nucleus] = float('-inf')
+        sampled_sorted_indexes = self.sampler(sorted_log_probs)
+        res = indices.gather(-1, sampled_sorted_indexes.unsqueeze(-1))
+        return res.squeeze(-1)
+</code></pre>
+
+                <h2 id="conclusion">Conclusion</h2>
+                <p>Decoding strategies play a crucial role in the quality and coherence of text generated by large language models. While Greedy Decoding is straightforward, it often leads to repetitive outputs. Temperature Sampling allows for greater diversity, while Top-K Sampling provides control over the token selection process. Nucleus Sampling, however, offers the most flexibility, dynamically adjusting to the context to produce more natural and contextually relevant text.</p>
+                <p>Understanding and implementing these decoding methods can significantly enhance the capabilities of LLMs, making them more effective in generating human-like language across a variety of applications.</p>
+
+            </section>
+        </div>
+
+        <!-- Back Button -->
+        <div class="back-button">
+            <a href="index.html">Return to Main Page</a>
+        </div>
+
+        <!-- Footer -->
+        <footer id="footer">
+            <section>
+                <h2>Contact Me</h2>
+                <dl class="alt">
+                    <dt>Email:</dt>
+                    <dd><a href="mailto:aymen.kallala@gmail.com">aymen.kallala@gmail.com</a><br><a href="mailto:aymen.kallala@columbia.edu">aymen.kallala@columbia.edu</a></dd>
+                </dl>
+                <ul class="icons">
+                    <li><a href="https://www.linkedin.com/in/aymenkallala/" class="icon brands fa-linkedin"><span class="label">LinkedIn</span></a></li>
+                    <li><a href="https://github.com/AymenKallala" class="icon brands fa-github"><span class="label">GitHub</span></a></li>
+                </ul>
+            </section>
+        </footer>
+
+    </div>
+
+</body>
+
+</html>
