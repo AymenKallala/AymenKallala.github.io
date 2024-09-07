@@ -1,176 +1,153 @@
 <!DOCTYPE HTML>
-<!--
-	Massively by HTML5 UP
-	html5up.net | @ajlkn
-	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
--->
 <html>
-	<head>
-		<title>Aymen Kallala's Portfolio - Projects</title>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-		<link rel="stylesheet" href="assets/css/main.css" />
-		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
-	</head>
-	<body class="is-preload">
+<head>
+    <title>Aymen Kallala's Portfolio - Projects</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+    <style>
+        /* Reduce the size of the main blog post image only */
+        .main-image {
+            max-width: 70%; /* Adjust the percentage as needed */
+            height: auto; /* Maintain aspect ratio */
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body class="is-preload">
+    <!-- Wrapper -->
+    <div id="wrapper" class="fade-in">
 
-		<!-- Wrapper -->
-			<div id="wrapper" class="fade-in">
+        <!-- Intro -->
+        <div id="intro">
+            <h1>Aymen Kallala</h1>
+            <h2>Graduate Student - Columbia University</h2>
+            <p><i>Bridging the gap between Arts and Science</i></p>
+            <ul class="actions">
+                <li><a href="#header" class="button icon solid solo fa-arrow-down scrolly">Continue</a></li>
+            </ul>
+        </div>
 
-				<!-- Intro -->
-					<div id="intro">
-						<h1>Aymen Kallala</h1>
-						
-						<h2>Graduate Student - Columbia University</h1>
-							<p><i>Bridging the gap between Arts and Science</i></p>
-						
-						<ul class="actions">
-							<li><a href="#header" class="button icon solid solo fa-arrow-down scrolly">Continue</a></li>
-						</ul>
-					</div>
+        <!-- Header -->
+        <header id="header">
+            <a href="index.html" class="logo">Aymen Kallala</a>
+        </header>
 
-				<!-- Header -->
-					<header id="header">
-						<a href="index.html" class="logo">Aymen Kallala</a>
-					</header>
+        <!-- Nav -->
+        <nav id="nav">
+            <ul class="links">
+                <li class="active"><a href="index.html">Blog Posts/Projects</a></li>
+                <li><a href="Aboutme.html">About me</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+            <ul class="icons">
+                <li><a href="https://www.linkedin.com/in/aymenkallala/" class="icon brands fa-linkedin"><span class="label">Linkedin</span></a></li>
+                <li><a href="https://github.com/AymenKallala" class="icon brands fa-github"><span class="label">GitHub</span></a></li>
+            </ul>
+        </nav>
 
-				<!-- Nav -->
-					<nav id="nav">
-						<ul class="links">
-							<li class="active"><a href="index.html">Blog Posts/Projects</a></li>
-							<li><a href="Aboutme.html">About me</a></li>
-							<li><a href="contact.html">Contact</a></li>
-							
-						</ul>
-						<ul class="icons">
-							<li><a href="https://www.linkedin.com/in/aymenkallala/" class="icon brands fa-linkedin"><span class="label">Linkedin</span></a></li>
-							<li><a href="https://github.com/AymenKallala" class="icon brands fa-github"><span class="label">GitHub</span></a></li>
-						</ul>
-					</nav>
+        <!-- Main -->
+        <div id="main">
 
-				<!-- Main -->
-					<div id="main">
+            <!-- Featured Post -->
+            <article>
+                <header>
+                    <h2><a href="#"> Classifier-guided Beam Search to Reduce LLMs Hallucinative Behavior
+					</a></h2>
+				</header>
+				<ul class="actions special">
+					<li><a href="augmented_beam_search.html" class="button">Read the Blog Post</a></li>
+				</ul>
+				<a href="#" class="image fit"><img src="https://s3.amazonaws.com/icptmsdata/s/a/l/g/salgado_sebastiao_2007_22_7_461086_displaysize.jpg" alt="" /></a>
+                <p>Independent research I conducted during my time at Columbia.</p>
+                <p>In collaboration with Jacklyn Tsai and Rick Xu. We developed a constrained sampling strategy, proved to be helpful in eliciting hallucinations in white-box LLMs. We used it to improve LLAMA2-7B score on StrategyQA and CommonsenseQA by 3% without any further training.</p>
+            </article>
 
-						<!-- Featured Post -->
-						<article>
-							<header>
+            <!-- Posts -->
+            <section class="posts">
+                <article class="post featured">
+                    <header>
+                        <h2><a href="#">DNA Modeling with State Space Models</a></h2>
+                    </header>
+                    <a href="#" class="image main"><img src="images/dna_modeling/dna_strand.png" alt="" /></a>
+                    <p>I break down how I built, pretrained and fine-tuned DNA foundation models using PyTorch Lightning...</p>
+                    <ul class="actions special">
+                        <li><a href="dna_modeling.html" class="button large">Read the Blog Post</a></li>
+                    </ul>
+                </article>
 
-								<h2><a href="#"> Classifier-guided Beam Search to Reduce LLMs Hallucinative Behavior
-								</a></h2>
-							</header>
-							<ul class="actions special">
-								<li><a href="augmented_beam_search.html" class="button">Read the Blog Post</a></li>
-							</ul>
-							<a href="#" class="image fit"><img src="https://s3.amazonaws.com/icptmsdata/s/a/l/g/salgado_sebastiao_2007_22_9_449099_displaysize.jpg" alt="" /></a>
-							<p>Independent research I conducted during my time at Columbia.</p>
-							<p>In collaboration with Jacklyn Tsai and Rick Xu. We developed a constrained sampling strategy, proved to be helpful in elicting hallucinations in white-box LLMs. We used it to improve LLAMA2-7B score on StrategyQA and CommonsenseQA by 3% without any further training.</p>
-							
-						</article>
+                <article class="post featured">
+                    <header class="major">
+                        <h2><a href="#">RAG-Maestro</a></h2>
+                    </header>
+                    <a href="#" class="image main"><img src="images/beautiful_maestro_2.png" alt="" /></a>
+                    <p>RAG-Maestro is an up-to-date LLM assistant designed to provide clear explanations...</p>
+                    <ul class="actions special">
+                        <li><a href="https://github.com/AymenKallala/RAG_Maestro" class="button large">Check it out</a></li>
+                    </ul>
+                </article>
+            </section>
 
-						<!-- Posts -->
-							<section class="posts">
-								<article class="post featured">
-									<header>
-										
-										<h2><a href="#">DNA Modeling with State Space Models
-										</a></h2>
-									</header>
-									<a href="#" class="image main"><img src="images/dna_modeling/dna_strand.png" alt="" /></a>
-										<p>I break down how I built, pretrained and fine-tuned DNA foundation models using PyTorch Lightning with data parallelism, learning rate scheduling, gradient accumulation, gradient checkpointing and others. Dive in to see how State Space Models can yields an efficient architecture concurrencing classical transformer-based models.</p>
-	
-									
-									<ul class="actions special">
-										<li><a href="dna_modeling.html" class="button large">Read the Blog Post</a></li>
-									</ul>
-								</article>
+            <section class="posts">
+                <article>
+                    <header>
+                        <h2><a href="#">Sampling Strategies for Language Models</a></h2>
+                    </header>
+                    <a href="#" class="image fit"><img src="images/augmented_beam_search/beam-search.svg" alt="" /></a>
+                    <p>My Python implementation of classic sampling strategies discussed in...</p>
+                    <ul class="actions special">
+                        <li><a href="sampling_strategies.html" class="button">Read the Blog Post</a></li>
+                    </ul>
+                </article>
 
-								<article class="post featured">
-									<header class="major">
-										<h2><a href="#">RAG-Maestro
-										</a></h2>										
-									</header>
-									<a href="#" class="image main"><img src="images/beautiful_maestro_2.png" alt="" /></a>
-										<p> RAG-Maestro is an up-to-date LLM assistant designed to provide clear and concise explanations of scientific concepts and cite relevant papers. It is powered by a custom paper bot scraper and a <b>RAG-Pipeline</b> leveraging <b>gpt-3.5</b> and <b>text-embedding-ada-002</b> from OpenAI</p>
+                <article class="post featured">
+                    <header>
+                        <h2><a href="#">Talk2Shakespeare</a></h2>
+                    </header>
+                    <a href="#" class="image main"><img src="images/shakespeare.png" alt="" /></a>
+                    <p>This project is an attempt to build a language model generating "old-fashioned" English...</p>
+                    <ul class="actions special">
+                        <li><a href="https://github.com/AymenKallala/Talk2Shakespeare" class="button large">Check it out</a></li>
+                    </ul>
+                </article>
+            </section>
 
-									<ul class="actions special">
-										<li><a href="https://github.com/AymenKallala/RAG_Maestro" class="button large">Check it out</a></li>
-									</ul>
-								</article>
-							
+        </div>
 
-							
-								
-							</section>
+        <!-- Footer -->
+        <footer id="footer">
+            <section class="split contact">
+                <section>
+                    <h3>Emails</h3>
+                    <p><a href="#">aymen.kallala@gmail.com<br />aymen.kallala@columbia.edu</a></p>
+                </section>
+                <section>
+                    <h3>Social</h3>
+                    <ul class="icons alt">
+                        <li><a href="https://www.linkedin.com/in/aymenkallala/" class="icon brands fa-linkedin"><span class="label">Linkedin</span></a></li>
+                        <li><a href="https://github.com/AymenKallala" class="icon brands fa-github"><span class="label">GitHub</span></a></li>
+                    </ul>
+                </section>
+            </section>
+        </footer>
 
-							<section class="posts">
+        <!-- Copyright -->
+        <div id="copyright">
+            <ul><li>&copy; Untitled</li><li>Design: <a href="https://html5up.net">HTML5 UP</a></li></ul>
+        </div>
 
-									<article>
-										<header>
-											
-											<h2><a href="#">Sampling Strategies for Language Models</a></h2>
-										</header>
-										<a href="#" class="image fit"><img src="images/Visual_Search_2.png" alt="" /></a>
-										<p> My Python implementation of classic sampling strategies discussed in <i>The Curious Case of Neural Text Degeneration</i>.</p>
-										<p>Nucleus Sampling and Top-K Sampling are the main contributions.</p>
-										<ul class="actions special">
-											<li><a href="sampling_strategies.html" class="button">Read the Blog Post</a></li>
-										</ul>
-									</article>
+    </div>
 
-									<article class="post featured">
-										<header>
-											
-											<h2><a href="#">Talk2Shakespeare
-											</a></h2>
-										</header>
-										<a href="#" class="image main"><img src="images/shakespeare.png" alt="" /></a>
-											<p>This project is an attempt to build a language model generating 
-												on "old-fashioned" English by fine-tuning state-of-the-art models on ancient texts.
-												Leveraging LoRA (Low Rank Adaptation), I built a <b>Shakespearian-Falcon-7B</b> capable of completing your prompts in poems and old-fashioned English. Further advancements for this projects include turning it into a conversational agent.</p>
-		
-										
-										<ul class="actions special">
-											<li><a href="https://github.com/AymenKallala/Talk2Shakespeare" class="button large">Check it out</a></li>
-										</ul>
-									</article>
-							</section>
+    <!-- Scripts -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/jquery.scrollex.min.js"></script>
+    <script src="assets/js/jquery.scrolly.min.js"></script>
+    <script src="assets/js/browser.min.js"></script>
+    <script src="assets/js/breakpoints.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/main.js"></script>
 
-						
-					</div>
-
-				<!-- Footer -->
-				<footer id="footer">
-					<section class="split contact">
-						<section>
-							<h3>Emails</h3>
-							<p><a href="#">aymen.kallala@gmail.com<br />
-								aymen.kallala@columbia.edu</a></p>
-						</section>
-						<section>
-							<h3>Social</h3>
-							<ul class="icons alt">
-								<li><a href="https://www.linkedin.com/in/aymenkallala/" class="icon brands fa-linkedin"><span class="label">Linkedin</span></a></li>
-						<li><a href="https://github.com/AymenKallala" class="icon brands fa-github"><span class="label">GitHub</span></a></li>
-							</ul>
-						</section>
-					</section>
-				</footer>
-
-				<!-- Copyright -->
-					<div id="copyright">
-						<ul><li>&copy; Untitled</li><li>Design: <a href="https://html5up.net">HTML5 UP</a></li></ul>
-					</div>
-
-			</div>
-
-		<!-- Scripts -->
-			<script src="assets/js/jquery.min.js"></script>
-			<script src="assets/js/jquery.scrollex.min.js"></script>
-			<script src="assets/js/jquery.scrolly.min.js"></script>
-			<script src="assets/js/browser.min.js"></script>
-			<script src="assets/js/breakpoints.min.js"></script>
-			<script src="assets/js/util.js"></script>
-			<script src="assets/js/main.js"></script>
-
-	</body>
+</body>
 </html>
